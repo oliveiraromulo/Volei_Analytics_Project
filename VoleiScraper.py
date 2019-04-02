@@ -38,6 +38,7 @@ def get_all_results_per_round():
 	#links = games.find_element_by_css_selector('p.Calendar_p_TextRow')
 	games_list = []
 	games_list_2 = []
+	games_list_3 = []
 	for game in games:
 		# print('Game: ', game)
 		# date = game.find_element_by_css_selector('p.Calendar_p_TextRow.Calendar_p_TextRow_Italic').get_attribute('span')
@@ -61,9 +62,12 @@ def get_all_results_per_round():
 		# print('Após split do placar: ', games_list_2[ind_game][3].strip().split('-'))
 		if games_list_2[ind_game].split('\n') == ['']:
 			games_list_2[ind_game].split('\n').remove('')
-			print('Eliminado')
+			print('Eliminada tupla vazia!')
 		else:
 			result_list.append(games_list_2[ind_game].split('\n'))
+
+	# for ind_game_3 in range(len(games_list_3)):
+	# 	result_list.append(games_list_3[ind_game_3][3].split(' - '))
 	return result_list
 
 result_list_csv = get_all_results_per_round()
@@ -91,7 +95,7 @@ for result in range(len(result_list_csv)):
 		result_list_csv[result][0]+separator+
 		result_list_csv[result][1]+separator+
 		result_list_csv[result][2]+separator+
-		str(result_list_csv[result][3])+separator+
+		str(result_list_csv[result][3].replace(' - ', '|'))+separator+
 		result_list_csv[result][4]+breakline)
 
 csvFile.close()
@@ -100,5 +104,5 @@ csvFile.close()
 # 	print('Data: ', result_list_csv[result][0])
 # 	print('Local: ', result_list_csv[result][1])
 # 	print('Casa: ', result_list_csv[result][2])
-# 	print('Placar: ', result_list_csv[result][3])
+# 	print('Placar: ', result_list_csv[result][3].replace(' - ', '|'))
 # 	print('Fora: ', result_list_csv[result][4])
