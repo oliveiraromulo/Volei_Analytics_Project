@@ -53,7 +53,7 @@ game_links = get_all_games_links()
 # print('Links Tratados: ', game_links)
 
 def get_data_from_game(url_list):
-	for url in range(10):
+	for url in range(len(url_list)):
 		print('URL: ', url_list[url])
 		browser.get(url_list[url])
 		# data_jogo = browser.find_element_by_xpath('//*[@id="Content_Main_LB_DateTime"]')
@@ -64,7 +64,7 @@ def get_data_from_game(url_list):
 		# print('Nome do arquivo CSV: ', time_casa.text.replace(' ', '_').strip() ,'_', placar_casa.text.strip(),
 		# 	'x',
 		# 	placar_visita.text.strip(), '_', time_visita.text.replace(' ', '_').strip())
-		csvNome = time_casa.text.replace(' ', '_').replace('/', '_').strip() + '_' + placar_casa.text.strip() + 'x' + placar_visita.text.strip() + '_' + time_visita.text.replace(' ', '_').replace('/', '_').strip() + '.csv'
+		csvNome = str(url) + ' - ' + time_casa.text.replace(' ', '_').replace('/', '_').strip() + '_' + placar_casa.text.strip() + 'x' + placar_visita.text.strip() + '_' + time_visita.text.replace(' ', '_').replace('/', '_').strip() + '.csv'
 		print('Nome CSV: ', csvNome)
 		# conj_sets = ['SET1', 'SET2', 'SET3', 'SET4', 'SET5']
 		# conj_sets = browser.find_element_by_xpath('//div[@id=ctl00_Content_Main_RTS_PlayByPlay]')
@@ -85,44 +85,53 @@ def get_data_from_game(url_list):
 			action = ActionChains(browser)
 			action.click(jog_por_jog_button)
 			action.perform()
-			tabela_jogadas = browser.find_elements_by_class_name('Row_WinnerHome')
-			for tj in range(len(tabela_jogadas)):
-				team_home = tabela_jogadas[tj].find_element_by_class_name('LYC_SkillPlayer_Home')
-				points = tabela_jogadas[tj].find_elements_by_tag_name('div')
-				#p_away = tabela_jogadas[tj].find_element_by_xpath('//*[@id="Home_Table"]/table/tbody/tr')
-				team_away = tabela_jogadas[tj].find_element_by_class_name('LYC_SkillPlayer_Guest')
-			# jogadas = [j.text for j in tabela_jogadas if j is not None]
-				print('Casa: ', team_home.text)
-				print('Ponto: ', points[3].text)
-				print('Fora: ', team_away.text)
-				#dataset.append([team_home.text, points[3].text, team_away.text])
-				if team_home.text == '' and team_away.text == '':
-					print('Entrou no if')
-					data.append([points[3].text.replace('\n', ''), 'Não Declarado', 'Não Declarado'])
-				elif team_away.text == '':
-					print('Entrou no elif')
-					palavra = team_home.text.split('\n')
-					data.append([points[3].text.replace('\n', ''), palavra[0], palavra[1]])
-				else:
-					print('Entrou no else')
-					palavra = team_away.text.split('\n')
-					data.append([points[3].text.replace('\n', ''), palavra[0], palavra[1]])
-			print(data)
-			separator = ';'
-			breakline = '\n'
-			csvFile = open(csvNome, 'w')
-			csvFile.write(
-				'PONTOS'+separator+
-				'JOGADOR'+separator+
-				'AÇÃO'+ breakline)
-
-			for cont in range(len(data)):
+			# sets = browser.find_elements_by_css_selector('#ctl00_Content_Main_RTS_PlayByPlay > div > ul > li.rtsLI > a > span > span > span')
+			sets = browser.find_elements_by_partial_link_text('SET')
+			print(sets)
+			for s in range(len(sets)):
+				elem = sets[s].text
+				print(elem)
+				sets2 = browser.find_element_by_link_text(elem)
+				sets2.click()
+				tabela_jogadas = browser.find_elements_by_class_name('Row_WinnerHome')
+				for tj in range(len(tabela_jogadas)):
+					team_home = tabela_jogadas[tj].find_element_by_class_name('LYC_SkillPlayer_Home')
+					points = tabela_jogadas[tj].find_elements_by_tag_name('div')
+					#p_away = tabela_jogadas[tj].find_element_by_xpath('//*[@id="Home_Table"]/table/tbody/tr')
+					team_away = tabela_jogadas[tj].find_element_by_class_name('LYC_SkillPlayer_Guest')
+				# jogadas = [j.text for j in tabela_jogadas if j is not None]
+					print('Casa: ', team_home.text)
+					print('Ponto: ', points[3].text)
+					print('Fora: ', team_away.text)
+					#dataset.append([team_home.text, points[3].text, team_away.text])
+					if team_home.text == '' and team_away.text == '':
+						# print('Entrou no if')
+						data.append([points[3].text.replace('\n', '').replace('-', 'x'), 'Não Declarado', 'Não Declarado'])
+					elif team_away.text == '':
+						# print('Entrou no elif')
+						palavra = team_home.text.split('\n')
+						data.append([points[3].text.replace('\n', '').replace('-', 'x'), palavra[0], palavra[1]])
+					else:
+						# print('Entrou no else')
+						palavra = team_away.text.split('\n')
+						data.append([points[3].text.replace('\n', '').replace('-', 'x'), palavra[0], palavra[1]])
+				print(data)
+				separator = ';'
+				breakline = '\n'
+				csvFile = open(csvNome, 'w')
 				csvFile.write(
-					str(data[cont][0])+separator+
-					str(data[cont][1])+separator+
-					str(data[cont][2])+breakline)
+					'PONTOS'+separator+
+					'JOGADOR'+separator+
+					'AÇÃO'+ breakline)
 
-			csvFile.close()
+				for cont in range(len(data)):
+					csvFile.write(
+						str(data[cont][0])+separator+
+						str(data[cont][1])+separator+
+						str(data[cont][2])+breakline)
+
+				csvFile.close()
+			pass
 		continue
 	return data
 
