@@ -55,7 +55,8 @@ game_links = get_all_games_links()
 def get_data_from_game(url_list):
 	for url in range(len(url_list)):
 		print('URL: ', url_list[url])
-		browser.get(url_list[url])
+		url_link = url_list[url]
+		browser.get(url_link)
 		# data_jogo = browser.find_element_by_xpath('//*[@id="Content_Main_LB_DateTime"]')
 		time_casa = browser.find_element_by_xpath('//*[@id="Content_Main_LBL_HomeTeam"]')
 		placar_casa = browser.find_element_by_xpath('//*[@id="Content_Main_LBL_WonSetHome"]')
@@ -75,85 +76,101 @@ def get_data_from_game(url_list):
 		data = []
 		html_source = browser.page_source
 		if "Jogador por Jogador" not in html_source:
-			#raise Exception('Jogo nao foi computado.')
 			print('Jogo nao foi computado')
+		
 		elif "Dados não disponíveis" in html_source:
-		    #raise Exception('Jogo nao contem dados.')
 		    print('Jogo nao contem dados')
+		
 		else:
 			jog_por_jog_button = browser.find_element_by_xpath('//*[@id="RTS_MatchInfo"]/div/ul/li[3]/a/span/span/span')
+			
+			#Utilizacao do ActionChains
 			action = ActionChains(browser)
 			action.click(jog_por_jog_button)
 			action.perform()
-			# sets = browser.find_elements_by_css_selector('#ctl00_Content_Main_RTS_PlayByPlay > div > ul > li.rtsLI > a > span > span > span')
-			sets = browser.find_elements_by_partial_link_text('SET')
-			print(sets)
-			for s in range(len(sets)):
-				elem = sets[s].text
-				print(elem)
-				sets2 = browser.find_element_by_link_text(elem)
-				sets2.click()
+			nome_sets = browser.find_elements_by_css_selector('#ctl00_Content_Main_RTS_PlayByPlay > div > ul > li.rtsLI > a > span > span')
+			print('Nome Sets: ', nome_sets)
+			print('Qtd Sets: ', len(nome_sets))
+
+			wait = WebDriverWait(browser, 30)
+			for set_atual in range(len(nome_sets)):
+				nome_sets = browser.find_elements_by_css_selector('#ctl00_Content_Main_RTS_PlayByPlay > div > ul > li.rtsLI > a > span > span')
+				print('Sets: ', nome_sets[set_atual].text)
+				element = nome_sets[set_atual]
+				element.click()
+				print('')
+
 				tabela_jogadas = browser.find_elements_by_class_name('Row_WinnerHome')
 				for tj in range(len(tabela_jogadas)):
+					
 					team_home = tabela_jogadas[tj].find_element_by_class_name('LYC_SkillPlayer_Home')
 					points = tabela_jogadas[tj].find_elements_by_tag_name('div')
-					#p_away = tabela_jogadas[tj].find_element_by_xpath('//*[@id="Home_Table"]/table/tbody/tr')
 					team_away = tabela_jogadas[tj].find_element_by_class_name('LYC_SkillPlayer_Guest')
-				# jogadas = [j.text for j in tabela_jogadas if j is not None]
-					print('Casa: ', team_home.text)
-					print('Ponto: ', points[3].text)
-					print('Fora: ', team_away.text)
-					#dataset.append([team_home.text, points[3].text, team_away.text])
-					if team_home.text == '' and team_away.text == '':
-						# print('Entrou no if')
+					
+					# Caso onde nenhum dos dois times possui o lance declarado
+					if team_home.text == '' and team_away.text == '': 
 						data.append([points[3].text.replace('\n', '').replace('-', 'x'), 'Não Declarado', 'Não Declarado'])
+					
+					# Caso onde a ação foi dada pelo time da casa, seja ela um erro ou um acerto
 					elif team_away.text == '':
-						# print('Entrou no elif')
+						print('Ação do time da casa')
 						palavra = team_home.text.split('\n')
-						data.append([points[3].text.replace('\n', '').replace('-', 'x'), palavra[0], palavra[1]])
+						if palavra[1] == 'Bola de Graça errada' or palavra[1] == 'Erro de saque':
+							data.append([points[3].text.replace('\n', '').replace('-', 'x'), palavra[0], palavra[1]])
+						else:
+							data.append([points[3].text.replace('\n', '').replace('-', 'x'), palavra[0], palavra[1]])
+					
+					# Caso onde a ação foi dada pelo time de fora, seja ela um erro ou um acerto
 					else:
-						# print('Entrou no else')
+						print('Ação do time visitante')
 						palavra = team_away.text.split('\n')
-						data.append([points[3].text.replace('\n', '').replace('-', 'x'), palavra[0], palavra[1]])
-				print(data)
-				separator = ';'
-				breakline = '\n'
-				csvFile = open(csvNome, 'w')
+						if palavra[1] == 'Bola de Graça errada' or palavra[1] == 'Erro de saque':
+							data.append([points[3].text.replace('\n', '').replace('-', 'x'), palavra[0], palavra[1]])
+						else:
+							data.append([points[3].text.replace('\n', '').replace('-', 'x'), palavra[0], palavra[1]])
+				
+				sleep(40)
+
+			
+			separator = ';'
+			breakline = '\n'
+			csvFile = open(csvNome, 'w')
+			csvFile.write(
+				'PONTOS'+separator+
+				'JOGADOR'+separator+
+				'AÇÃO'+breakline)
+			for cont in range(len(data)):
 				csvFile.write(
-					'PONTOS'+separator+
-					'JOGADOR'+separator+
-					'AÇÃO'+ breakline)
+					str(data[cont][0])+separator+
+					str(data[cont][1])+separator+
+					str(data[cont][2])+breakline)
 
-				for cont in range(len(data)):
-					csvFile.write(
-						str(data[cont][0])+separator+
-						str(data[cont][1])+separator+
-						str(data[cont][2])+breakline)
-
-				csvFile.close()
-			pass
+			csvFile.close()
+			
 		continue
-	return data
+
+	return 'Feito'
+	
 
 games = get_data_from_game(game_links)
 
-print('Tamanho dataset: ', len(games))
+# print('Tamanho dataset: ', len(games))
 
-def cria_csv(nome_csv, dados):
-	print('Criando Dataset em CSV')
-	print(dataset)
-	separator = ';'
-	breakline = '\n'
-	csvFile = open(csvNome, 'w')
-	csvFile.write(
-		'PONTOS'+separator+
-		'JOGADOR'+separator+
-		'AÇÃO'+ breakline)
+# def cria_csv(nome_csv, dados):
+# 	print('Criando Dataset em CSV')
+# 	print(dataset)
+# 	separator = ';'
+# 	breakline = '\n'
+# 	csvFile = open(csvNome, 'w')
+# 	csvFile.write(
+# 		'PONTOS'+separator+
+# 		'JOGADOR'+separator+
+# 		'AÇÃO'+ breakline)
 
-	for cont in range(len(dataset)):
-		csvFile.write(
-			dataset[cont]+separator+
-			data[cont]+separator+
-			dataset[cont]+breakline)
+# 	for cont in range(len(dataset)):
+# 		csvFile.write(
+# 			dataset[cont]+separator+
+# 			data[cont]+separator+
+# 			dataset[cont]+breakline)
 
-	csvFile.close()
+# 	csvFile.close()
