@@ -100,6 +100,11 @@ def get_data_from_game(url_list):
 				element.click()
 				print('')
 
+				time_casa_2 = browser.find_element_by_xpath('//*[@id="Content_Main_LBL_HomeTeam"]')
+				time_visita_2 = browser.find_element_by_xpath('//*[@id="Content_Main_LBL_GuestTeam"]')
+				print('Time Casa: ', time_casa_2.text)
+				print('Time visitante: ', time_visita_2.text)
+
 				tabela_jogadas = browser.find_elements_by_class_name('Row_WinnerHome')
 				for tj in range(len(tabela_jogadas)):
 					
@@ -109,25 +114,25 @@ def get_data_from_game(url_list):
 					
 					# Caso onde nenhum dos dois times possui o lance declarado
 					if team_home.text == '' and team_away.text == '': 
-						data.append([points[3].text.replace('\n', '').replace('-', 'x'), 'Não Declarado', 'Não Declarado'])
+						data.append([str(set_atual + 1), points[3].text.replace('\n', '').replace('-', 'x'), 'Não Declarado','Não Declarado', 'Não Declarado', 'Não Declarado'])
 					
 					# Caso onde a ação foi dada pelo time da casa, seja ela um erro ou um acerto
 					elif team_away.text == '':
 						print('Ação do time da casa')
 						palavra = team_home.text.split('\n')
-						if palavra[1] == 'Bola de Graça errada' or palavra[1] == 'Erro de saque':
-							data.append([points[3].text.replace('\n', '').replace('-', 'x'), palavra[0], palavra[1]])
+						if palavra[1] == 'Bola de Graça errada' or palavra[1] == 'Erro de Saque' || palavra[1] == 'Erros de Ataque':
+							data.append([str(set_atual + 1), points[3].text.replace('\n', '').replace('-', 'x'), time_casa_2.text, palavra[0], palavra[1], time_visita_2.text])
 						else:
-							data.append([points[3].text.replace('\n', '').replace('-', 'x'), palavra[0], palavra[1]])
+							data.append([str(set_atual + 1), points[3].text.replace('\n', '').replace('-', 'x'), time_casa_2.text, palavra[0], palavra[1], time_casa_2.text])
 					
 					# Caso onde a ação foi dada pelo time de fora, seja ela um erro ou um acerto
 					else:
 						print('Ação do time visitante')
 						palavra = team_away.text.split('\n')
-						if palavra[1] == 'Bola de Graça errada' or palavra[1] == 'Erro de saque':
-							data.append([points[3].text.replace('\n', '').replace('-', 'x'), palavra[0], palavra[1]])
+						if palavra[1] == 'Bola de Graça errada' or palavra[1] == 'Erro de Saque' || palavra[1] == 'Erros de Ataque':
+							data.append([str(set_atual + 1), points[3].text.replace('\n', '').replace('-', 'x'), time_visita_2.text, palavra[0], palavra[1], time_casa_2.text])
 						else:
-							data.append([points[3].text.replace('\n', '').replace('-', 'x'), palavra[0], palavra[1]])
+							data.append([str(set_atual + 1), points[3].text.replace('\n', '').replace('-', 'x'), time_visita_2.text, palavra[0], palavra[1], time_visita_2.text])
 				
 				sleep(40)
 
@@ -136,14 +141,20 @@ def get_data_from_game(url_list):
 			breakline = '\n'
 			csvFile = open(csvNome, 'w')
 			csvFile.write(
+				'SET_ATUAL'+separator+
 				'PONTOS'+separator+
+				'TIME'+separator+
 				'JOGADOR'+separator+
-				'AÇÃO'+breakline)
+				'TIPO_AÇÃO'+separator+
+				'PONTO_PARA'+breakline)
 			for cont in range(len(data)):
 				csvFile.write(
 					str(data[cont][0])+separator+
 					str(data[cont][1])+separator+
-					str(data[cont][2])+breakline)
+					str(data[cont][2])+separator+
+					str(data[cont][3])+separator+
+					str(data[cont][4])+separator+
+					str(data[cont][5])+breakline)
 
 			csvFile.close()
 			
